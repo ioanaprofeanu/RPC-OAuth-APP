@@ -104,5 +104,5 @@ program AUTH_APP {
 
 		/* function for renewing the access token */
 		reply_access_token func_renew_access_token(request_renew_access_token) = 5;
-    } = 6;
-} = 7;
+    } = 1;
+} = 0x33445566;

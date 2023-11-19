@@ -11,8 +11,8 @@
 #include <vector>
 #include <queue>
 #include <sstream>
-
 using namespace std;
+
 queue<string> client_input;
 
 void read_client_input(const string& filename) {
@@ -104,7 +104,7 @@ auth_app_1(char *host)
 
 			reply_authorization *result_1 = func_authorization_1(func_authorization_1_arg1, clnt);
 			if (result_1 == (reply_authorization *) NULL) {
-				clnt_perror (clnt, "call failed");
+				perror("RPC client call failed");
 				exit(1);
 			}
 			cout << "RequestToken = " << result_1->token_authorize_access << endl;
@@ -151,13 +151,13 @@ main (int argc, char *argv[])
 {
 	char *host;
 
-	if (argc < 3) {
-		printf ("usage: %s server_host client_input_file\n", argv[0]);
+	if (argc < 2) {
+		printf ("usage: %s server_host\n", argv[0]);
 		exit (1);
 	}
 
 	read_client_input(argv[2]);
-
+	
 	host = argv[1];
 	auth_app_1 (host);
 exit (0);

@@ -30,6 +30,8 @@ func_authorization_1_svc(request_authorization arg1,  struct svc_req *rqstp)
 		server_database[token_authorize_access_string] = new_database_value;
 
 		result.token_authorize_access = strdup(token_authorize_access);
+		result.error_message = strdup("");
+
 		if (result.token_authorize_access == NULL) {
 			cerr << "Error: Memory allocation failed for token_authorize_access" << endl;
 			// Handle the error, possibly by exiting or taking appropriate actions
@@ -39,7 +41,11 @@ func_authorization_1_svc(request_authorization arg1,  struct svc_req *rqstp)
     } else {
         result.error_message = new char[strlen("USER_NOT_FOUND") + 1];
 		strcpy(result.error_message, "USER_NOT_FOUND");
+		result.token_authorize_access = new char[strlen(NO_TOKEN) + 1];
     }
+
+	cout << result.error_message << endl;
+	cout << result.token_authorize_access << endl;
 
 	return &result;
 }

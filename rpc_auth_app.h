@@ -69,8 +69,8 @@ struct request_renew_access_token {
 };
 typedef struct request_renew_access_token request_renew_access_token;
 
-#define AUTH_APP 7
-#define AUTH_APP_VERS 6
+#define AUTH_APP 0x33445566
+#define AUTH_APP_VERS 1
 
 #if defined(__STDC__) || defined(__cplusplus)
 #define func_authorization 1
