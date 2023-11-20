@@ -18,7 +18,7 @@ struct Tokens {
     std::string token_authorize_access;
     std::string token_resource_access;
     std::string token_refresh;
-    int validity; // New field for validity in days
+    int validity;
 };
 
 // Unordered map for Permissions with resource names
@@ -30,6 +30,7 @@ struct Database_Value {
     Tokens tokens;
 };
 
-#define NO_TOKEN ""
+#define EMPTY ""
+#define SIGNATURE "SIGNED_"
 
 #endif // SERVER_UTILS_H

@@ -1,0 +1,18 @@
+DENY (READ,UserData,,0)
+BEGIN X5B0TWjmeNtU3vd AUTHZ
+  RequestToken = v53teNBmWTXjUd0
+  AccessToken = mNBIv3N_5DSeGEt
+PERMIT (READ,UserData,mNBIv3N_5DSeGEt,1)
+DENY (DELETE,Preferences,mNBIv3N_5DSeGEt,0)
+DENY (EXECUTE,UserData,mNBIv3N_5DSeGEt,-1)
+BEGIN X5B0TWjmeNtU3vd AUTHZ
+  RequestToken = dvBj3mU5WXTtN0e
+  AccessToken = 5U_GNSDjBv3IEdm
+DENY (MODIFY,SystemData,5U_GNSDjBv3IEdm,1)
+PERMIT (EXECUTE,Applications,5U_GNSDjBv3IEdm,0)
+BEGIN QHmJh2xwErPDcmv AUTHZ
+  RequestToken = mxvJQE2whHrcDPm
+BEGIN PYM3XptJ6asHaRp AUTHZ
+  RequestToken = pPHXta6YpMas3RJ
+  AccessToken = S_ENG6pHtDaIXYP
+DENY (EXECUTE,Random,S_ENG6pHtDaIXYP,1)

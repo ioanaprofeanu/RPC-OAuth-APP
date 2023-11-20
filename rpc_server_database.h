@@ -19,6 +19,8 @@ extern std::vector<std::string> resources;
 extern std::queue<std::string> waitlist_permissions;
 extern int num_users;
 extern int num_resources;
+extern int token_validity;
+extern std::ofstream fout;
 
 // functie citire date din fisiere
 void read_usersIDs(const std::string& filename);

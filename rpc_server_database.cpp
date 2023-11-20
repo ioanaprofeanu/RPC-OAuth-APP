@@ -16,7 +16,8 @@ unordered_map<string, Database_Value> server_database;
 vector<string> resources;
 // queue with the permissions that are waiting for approval
 queue<string> waitlist_permissions;
-int num_users, num_resources;
+int num_users, num_resources, token_validity;
+ofstream fout("server.out");
 
 void read_usersIDs(const string& filename) {
     ifstream file(filename);
@@ -114,8 +115,8 @@ Database_Value initialize_server_database_entry(string new_token_authorize_acces
 
 	// initialize tokens to empty string
 	tokens.token_authorize_access = new_token_authorize_access;
-	tokens.token_resource_access = NO_TOKEN;
-	tokens.token_refresh = NO_TOKEN;
+	tokens.token_resource_access = EMPTY;
+	tokens.token_refresh = EMPTY;
 	tokens.validity = 0;
 
 	// for each resource, initialize permissions to false
