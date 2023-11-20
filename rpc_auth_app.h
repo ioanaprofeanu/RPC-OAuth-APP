@@ -65,7 +65,7 @@ typedef struct reply_token_approval reply_token_approval;
 
 struct request_renew_access_token {
 	char *userID;
-	char *token_authorize_access_expired;
+	char *token_resource_access_expired;
 };
 typedef struct request_renew_access_token request_renew_access_token;
 

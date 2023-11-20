@@ -22,8 +22,7 @@ func_authorization_1_svc(request_authorization arg1,  struct svc_req *rqstp)
 	static reply_authorization result;
 	
 	string user_id = arg1.userID;
-	// TODO ar treebui afisat in server.out!!!!!!!
-	fout << "BEGIN " << user_id << " AUTHZ\n";
+	fout << "BEGIN " << user_id << " AUTHZ" << endl;
 	// check if the user is in the database
 	auto it = usersID_active_tokens.find(user_id);
     if (it != usersID_active_tokens.end()) {
@@ -47,7 +46,6 @@ func_authorization_1_svc(request_authorization arg1,  struct svc_req *rqstp)
 		// add token to result
 		result.token_authorize_access = strdup(token_authorize_access);
 		result.error_message = strdup("");
-
 
 		fout << "  RequestToken = " << token_authorize_access_string << endl;
     } else {
@@ -121,7 +119,6 @@ func_access_token_1_svc(request_access_token arg1,  struct svc_req *rqstp)
 reply_validate_delegated_action *
 func_validate_delegated_action_1_svc(request_validate_delegated_action arg1,  struct svc_req *rqstp)
 {
-	// TODO: DE ADAUGAT MESAJE!!!!!!!!!!!!
 	static reply_validate_delegated_action result;
 
 	string token_resource_access = arg1.token_resource_access;
@@ -166,7 +163,7 @@ func_validate_delegated_action_1_svc(request_validate_delegated_action arg1,  st
         if (server_database[token_resource_access].permissionsResources[accessed_resource].Read == false) {
 			// decrease the validity of the token
 			server_database[token_resource_access].tokens.validity--;
-			fout << "DENY (" << operation_type << "," << accessed_resource << "," << token_resource_access << "," << server_database[token_resource_access].tokens.validity << ")" << endl;
+			fout << "DENY (" << operation_type << "," << accessed_resource << "," << token_resource_access << "," << server_database[token_resource_access].tokens.validity << ")" << endl;;
 			result.error_message = new char[strlen("OPERATION_NOT_PERMITTED") + 1];
 			strcpy(result.error_message, "OPERATION_NOT_PERMITTED");
 			result.success_message = new char[strlen(EMPTY) + 1];
@@ -189,7 +186,7 @@ func_validate_delegated_action_1_svc(request_validate_delegated_action arg1,  st
 		if (server_database[token_resource_access].permissionsResources[accessed_resource].Modify == false) {
 			// decrease the validity of the token
 			server_database[token_resource_access].tokens.validity--;
-			fout << "DENY (" << operation_type << "," << accessed_resource << "," << token_resource_access << "," << server_database[token_resource_access].tokens.validity << ")" << endl;
+			fout << "DENY (" << operation_type << "," << accessed_resource << "," << token_resource_access << "," << server_database[token_resource_access].tokens.validity << ")" << endl;;
 			result.error_message = new char[strlen("OPERATION_NOT_PERMITTED") + 1];
 			strcpy(result.error_message, "OPERATION_NOT_PERMITTED");
 			result.success_message = new char[strlen(EMPTY) + 1];
@@ -221,6 +218,15 @@ func_validate_delegated_action_1_svc(request_validate_delegated_action arg1,  st
 			return &result;
 		}
 		// Code for EXECUTE operation
+	} else {
+		// if the operation is not recognized, deny access
+		server_database[token_resource_access].tokens.validity--;
+		fout << "DENY (" << operation_type << "," << accessed_resource << "," << token_resource_access << "," << server_database[token_resource_access].tokens.validity << ")" << endl;
+		result.error_message = new char[strlen("OPERATION_NOT_PERMITTED") + 1];
+		strcpy(result.error_message, "OPERATION_NOT_PERMITTED");
+		result.success_message = new char[strlen(EMPTY) + 1];
+		strcpy(result.success_message, EMPTY);
+		return &result;
 	}
 
 	// if the operation is permitted, return success
@@ -296,9 +302,60 @@ func_renew_access_token_1_svc(request_renew_access_token arg1,  struct svc_req *
 {
 	static reply_access_token  result;
 
+	string user_id = arg1.userID;
+	fout << "BEGIN " << user_id << " AUTHZ REFRESH" << endl;
+
 	/*
-	 * insert server code here
-	 */
+	  AccessToken = xd20fd4N6f1868i
+  	  RefreshToken = 6dfi4d61f08xN82
+	*/
+	string token_resource_access_expired = arg1.token_resource_access_expired;
+	// if the given expired token corresponds to the user
+	if (usersID_active_tokens[user_id] == token_resource_access_expired) {
+		string refresh_token = server_database[token_resource_access_expired].tokens.token_refresh;
+		// check if the user has requested a refresh token when he first asked for the access token
+		if (refresh_token != EMPTY) {
+			// generate new access token and new refresh token
+			char* refresh_token_char = strdup(refresh_token.c_str());
+			char* new_token_resource_access = generate_access_token(refresh_token_char);
+			string new_token_resource_access_string(new_token_resource_access);
+			fout << "  AccessToken = " << new_token_resource_access_string << endl;
+
+			char* new_token_refresh = generate_access_token(new_token_resource_access);
+			string new_token_refresh_string(new_token_refresh);
+			fout << "  RefreshToken = " << new_token_refresh_string << endl;
+
+			// update the database
+			usersID_active_tokens[user_id] = new_token_resource_access_string;
+			server_database[new_token_resource_access_string] = server_database[token_resource_access_expired];
+			server_database[new_token_resource_access_string].tokens.token_resource_access = new_token_resource_access_string;
+			server_database[new_token_resource_access_string].tokens.token_refresh = new_token_refresh_string;
+			server_database[new_token_resource_access_string].tokens.validity = token_validity;
+			server_database.erase(token_resource_access_expired);
+
+			// return the new access token and the new refresh token
+			result.token_resource_access = strdup(new_token_resource_access);
+			result.token_refresh = strdup(new_token_refresh);
+			result.error_message = strdup("");
+			result.validity = token_validity;
+		} else {
+			result.error_message = new char[strlen("REQUEST_DENIED") + 1];
+			strcpy(result.error_message, "REQUEST_DENIED");
+			result.token_refresh = new char[strlen(EMPTY) + 1];
+			strcpy(result.token_refresh, EMPTY);
+			result.token_resource_access = new char[strlen(EMPTY) + 1];
+			strcpy(result.token_resource_access, EMPTY);
+			result.validity = 0;
+		}
+	} else {
+		result.error_message = new char[strlen("REQUEST_DENIED") + 1];
+		strcpy(result.error_message, "REQUEST_DENIED");
+		result.token_refresh = new char[strlen(EMPTY) + 1];
+		strcpy(result.token_refresh, EMPTY);
+		result.token_resource_access = new char[strlen(EMPTY) + 1];
+		strcpy(result.token_resource_access, EMPTY);
+		result.validity = 0;
+	}
 
 	return &result;
 }

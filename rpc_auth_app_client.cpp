@@ -80,9 +80,6 @@ auth_app_1(char *host)
 {
 	CLIENT *clnt;
 	ofstream fout("client.out");
-	
-	reply_access_token  *result_5;
-	request_renew_access_token func_renew_access_token_1_arg1;
 
 	clnt = clnt_create (host, AUTH_APP, AUTH_APP_VERS, "udp");
 	if (clnt == NULL) {
@@ -157,8 +154,23 @@ auth_app_1(char *host)
 		} else {
 			// tbd
 			// AICI FAC IF IN CAZ CA AM REFRESH TOKEN
-			if (client_database[command_parameters.user_id].token_refresh == "" && client_database[command_parameters.user_id].validity == 0) {
-				// fac cerere de refresh token!
+			if (client_database[command_parameters.user_id].token_refresh != "" && client_database[command_parameters.user_id].validity == 0) {
+				request_renew_access_token func_renew_access_token_1_arg1;
+				func_renew_access_token_1_arg1.userID = strdup(command_parameters.user_id.c_str());
+				// TODO: AICI ARGUMENTUL AR TREBUI SA SE NUMEASCA token_resource_access
+				func_renew_access_token_1_arg1.token_resource_access_expired = strdup(client_database[command_parameters.user_id].token_resource_access.c_str());
+				reply_access_token *result_5 = func_renew_access_token_1(func_renew_access_token_1_arg1, clnt);
+				if (result_5 == (reply_access_token *) NULL) {
+					clnt_perror (clnt, "call failed");
+					exit(1);
+				}
+				if (strcmp(result_5->error_message, "") == 0) {
+					client_database[command_parameters.user_id].token_resource_access = result_5->token_resource_access;
+					client_database[command_parameters.user_id].token_refresh = result_5->token_refresh;
+					client_database[command_parameters.user_id].validity = result_5->validity;
+				} else {
+					fout << result_5->error_message << endl;
+				}
 			}
 			request_validate_delegated_action func_validate_delegated_action_1_arg1;
 			func_validate_delegated_action_1_arg1.token_resource_access = strdup(client_database[command_parameters.user_id].token_resource_access.c_str());
@@ -181,17 +193,6 @@ auth_app_1(char *host)
         client_input.pop();
     }
 
-
-	
-	// result_3 = func_validate_delegated_action_1(func_validate_delegated_action_1_arg1, clnt);
-	// if (result_3 == (reply_validate_delegated_action *) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
-
-	// result_5 = func_renew_access_token_1(func_renew_access_token_1_arg1, clnt);
-	// if (result_5 == (reply_access_token *) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
 	fout.close();
 	clnt_destroy (clnt);
 }

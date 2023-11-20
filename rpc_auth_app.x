@@ -85,7 +85,7 @@ struct request_renew_access_token {
 	/* the user id string */
 	string userID<>;
 	/* the authorization token */
-	string token_authorize_access_expired<>;
+	string token_resource_access_expired<>;
 };
 
 program AUTH_APP {

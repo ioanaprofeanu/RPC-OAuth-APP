@@ -110,7 +110,7 @@ xdr_request_renew_access_token (XDR *xdrs, request_renew_access_token *objp)
 
 	 if (!xdr_string (xdrs, &objp->userID, ~0))
 		 return FALSE;
-	 if (!xdr_string (xdrs, &objp->token_authorize_access_expired, ~0))
+	 if (!xdr_string (xdrs, &objp->token_resource_access_expired, ~0))
 		 return FALSE;
 	return TRUE;
 }
