@@ -1,4 +1,5 @@
 // a fost modificat pt ca e entry point ul in program
+
 #include "rpc_auth_app.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +44,7 @@ _func_renew_access_token_1 (request_renew_access_token  *argp, struct svc_req *r
 	return (func_renew_access_token_1_svc(*argp, rqstp));
 }
 
+// removed the register keyword, as it is obsolete in C++
 static void
 auth_app_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
@@ -125,14 +127,9 @@ main (int argc, char **argv)
     char *resources_file = argv[2];
     char *approvals_file = argv[3];
     
-	int token_lifetime = -1;
+	token_validity = 1;
 	if (argc == 5) {
-    	token_lifetime = atoi(argv[4]);  // Extract and convert token_lifetime to an integer
-		// Check if token_lifetime is a valid integer
-		if (token_lifetime <= 0) {
-			fprintf(stderr, "Error: Invalid token_lifetime value\n");
-			exit(1);
-		}
+    	token_validity = atoi(argv[4]);
 	}
 
 	// Read the files and initialize the database
@@ -141,7 +138,8 @@ main (int argc, char **argv)
 	read_permissions(approvals_file);
 
 	// end of modification
-
+	
+	// removed register keyword, as it is obsolete in C++
 	SVCXPRT *transp;
 
 	pmap_unset (AUTH_APP, AUTH_APP_VERS);
@@ -168,6 +166,7 @@ main (int argc, char **argv)
 
 	svc_run ();
 	fprintf (stderr, "%s", "svc_run returned");
+	fout.close();
 	exit (1);
 	/* NOTREACHED */
 }

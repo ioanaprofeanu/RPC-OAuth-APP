@@ -82,8 +82,6 @@ struct reply_token_approval {
 */
 /* the client renew access token request structure */
 struct request_renew_access_token {
-	/* the user id string */
-	string userID<>;
 	/* the authorization token */
 	string token_resource_access_expired<>;
 };

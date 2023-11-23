@@ -11,69 +11,8 @@
 #include <vector>
 #include <queue>
 #include <sstream>
+#include "rpc_client_commands.h"
 using namespace std;
-
-// Structure for tokens
-struct Tokens {
-    std::string token_authorize_access;
-    std::string token_resource_access;
-    std::string token_refresh;
-    int validity;
-};
-
-queue<string> client_input;
-// the client database contains the user id and the asociated tokens
-unordered_map<string, Tokens> client_database;
-
-void read_client_input(const string& filename) {
-    ifstream file(filename);
-
-    if (!file.is_open()) {
-        cerr << "Error: Unable to open file " << filename << endl;
-        return;
-    }
-
-    string line;
-
-    // Clear the queue
-    while (!client_input.empty()) {
-        client_input.pop();
-    }
-
-    // Read all lines until the end of the file
-    while (getline(file, line)) {
-        client_input.push(line);
-    }
-
-    file.close();
-}
-
-struct Command_Parameters {
-    string user_id;
-    string command;
-    string parameter; // is either a resource name or number 
-};
-
-Command_Parameters extract_commands_parameters(const string& input) {
-    istringstream stream_input(input);
-    string token;
-
-    Command_Parameters result;
-
-    // Extract user_id
-    if (getline(stream_input, token, ','))
-        result.user_id = token;
-
-    // Extract command
-    if (getline(stream_input, token, ','))
-        result.command = token;
-
-    // Extract parameter
-    if (getline(stream_input, token, ','))
-        result.parameter = token;
-
-    return result;
-}
 
 void
 auth_app_1(char *host)
@@ -103,9 +42,12 @@ auth_app_1(char *host)
 
 			reply_authorization *result_1 = func_authorization_1(func_authorization_1_arg1, clnt);
 			if (result_1 == (reply_authorization *) NULL) {
+				free_result_1(result_1);
+				free_func_authorization_1_arg1(&func_authorization_1_arg1);
 				clnt_perror (clnt, "call failed");
 				exit(1);
 			}
+			free_func_authorization_1_arg1(&func_authorization_1_arg1);
 
 			// if the user is found in the server database
 			if (strcmp(result_1->error_message, "") == 0) {
@@ -114,9 +56,13 @@ auth_app_1(char *host)
 				func_token_approval_1_arg1.token_authorize_access = strdup(result_1->token_authorize_access);
 				reply_token_approval  *result_4 = func_token_approval_1(func_token_approval_1_arg1, clnt);
 				if (result_4 == (reply_token_approval *) NULL) {
+					free_result_4(result_4);
+					free_func_token_approval_1_arg1(&func_token_approval_1_arg1);
 					clnt_perror (clnt, "call failed");
 					exit(1);
 				}
+
+				free_func_token_approval_1_arg1(&func_token_approval_1_arg1);
 
 				// request access token
 				request_access_token func_access_token_1_arg1;
@@ -125,9 +71,12 @@ auth_app_1(char *host)
 				func_access_token_1_arg1.use_refresh_token = atoi(command_parameters.parameter.c_str());
 				reply_access_token *result_2 = func_access_token_1(func_access_token_1_arg1, clnt);
 				if (result_2 == (reply_access_token *) NULL) {
+					free_result_2(result_2);
+					free_func_access_token_1_arg1(&func_access_token_1_arg1);
 					clnt_perror (clnt, "call failed");
 					exit(1);
 				}
+				free_func_access_token_1_arg1(&func_access_token_1_arg1);
 
 				// if the token is signed, print the access token
 				if (strcmp(result_2->error_message, "") == 0) {
@@ -146,9 +95,17 @@ auth_app_1(char *host)
 					// if the token is not signed, the access is denied, so print the error
 					fout << result_2->error_message << endl;
 				}
+
+				// free uri responses????
+				free_result_1(result_1);
+				free_result_2(result_2);
+				free_result_4(result_4);
+
 			} else {
 				// if the user is not found in the server database, print the error
 				fout << result_1->error_message << endl;
+				free_result_1(result_1);
+
 			}
 
 		} else {
@@ -156,14 +113,16 @@ auth_app_1(char *host)
 			// AICI FAC IF IN CAZ CA AM REFRESH TOKEN
 			if (client_database[command_parameters.user_id].token_refresh != "" && client_database[command_parameters.user_id].validity == 0) {
 				request_renew_access_token func_renew_access_token_1_arg1;
-				func_renew_access_token_1_arg1.userID = strdup(command_parameters.user_id.c_str());
 				// TODO: AICI ARGUMENTUL AR TREBUI SA SE NUMEASCA token_resource_access
 				func_renew_access_token_1_arg1.token_resource_access_expired = strdup(client_database[command_parameters.user_id].token_resource_access.c_str());
 				reply_access_token *result_5 = func_renew_access_token_1(func_renew_access_token_1_arg1, clnt);
 				if (result_5 == (reply_access_token *) NULL) {
+					free_result_5(result_5);
+					free_func_renew_access_token_1_arg1(&func_renew_access_token_1_arg1);
 					clnt_perror (clnt, "call failed");
 					exit(1);
 				}
+				free_func_renew_access_token_1_arg1(&func_renew_access_token_1_arg1);
 				if (strcmp(result_5->error_message, "") == 0) {
 					client_database[command_parameters.user_id].token_resource_access = result_5->token_resource_access;
 					client_database[command_parameters.user_id].token_refresh = result_5->token_refresh;
@@ -171,6 +130,7 @@ auth_app_1(char *host)
 				} else {
 					fout << result_5->error_message << endl;
 				}
+				free_result_5(result_5);
 			}
 			request_validate_delegated_action func_validate_delegated_action_1_arg1;
 			func_validate_delegated_action_1_arg1.token_resource_access = strdup(client_database[command_parameters.user_id].token_resource_access.c_str());
@@ -180,14 +140,18 @@ auth_app_1(char *host)
 
 			reply_validate_delegated_action *result_3 = func_validate_delegated_action_1(func_validate_delegated_action_1_arg1, clnt);
 			if (result_3 == (reply_validate_delegated_action *) NULL) {
+				free_result_3(result_3);
+				free_func_validate_delegated_action_1_arg1(&func_validate_delegated_action_1_arg1);
 				clnt_perror (clnt, "call failed");
 				exit(1);
 			}
+			free_func_validate_delegated_action_1_arg1(&func_validate_delegated_action_1_arg1);
 			if (strcmp(result_3->error_message, "") == 0) {
 				fout << result_3->success_message << endl;
 			} else {
 				fout << result_3->error_message << endl;
 			}
+			free_result_3(result_3);
 		}
 		// Pop the front element to remove it from the queue
         client_input.pop();
