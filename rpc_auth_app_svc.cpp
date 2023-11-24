@@ -1,4 +1,9 @@
-// a fost modificat pt ca e entry point ul in program
+/*
+	Profeanu Ioana - 343C1
+	Tema 1 SPRC
+	- the modified svc file for the server; it was modified to
+	support command line arguments and database initialization
+*/
 
 #include "rpc_auth_app.h"
 #include <stdio.h>
@@ -117,27 +122,31 @@ auth_app_1(struct svc_req *rqstp, SVCXPRT *transp)
 int
 main (int argc, char **argv)
 {
-	// modifies main 
-	if (argc < 4 || argc > 5) {  // Update the expected number of arguments
+	// main function modification to accept command line arguments
+
+	// check the number of arguments
+	if (argc < 4 || argc > 5) {
         fprintf(stderr, "Usage: %s userIDs_file resources_file approvals_file [token_lifetime]\n", argv[0]);
         exit(1);
     }
 
+	// extract the file names
     char *userIDs_file = argv[1];
     char *resources_file = argv[2];
     char *approvals_file = argv[3];
     
+	// check if the token validity was specified
 	token_validity = 1;
 	if (argc == 5) {
     	token_validity = atoi(argv[4]);
 	}
 
-	// Read the files and initialize the database
+	// parse the files and initialize the database
 	read_usersIDs(userIDs_file);
 	read_resources(resources_file);
 	read_permissions(approvals_file);
 
-	// end of modification
+	// the end of the main file modification
 	
 	// removed register keyword, as it is obsolete in C++
 	SVCXPRT *transp;

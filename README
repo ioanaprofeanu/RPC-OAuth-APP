@@ -1,0 +1,111 @@
+## Profeanu Ioana - 343C1
+# Tema 1 SPRC
+-------------------------------------------------------------------------------
+# Overview
+* The program represents a client-server application implemented using RPC,
+which utilizes the OAuth authorization system. The server employs tokens in
+communication with the client and provides access to the resources.
+* The program was implemented starting from the interface specification file,
+where the structures for each function exposed by the server were defined.
+-------------------------------------------------------------------------------
+# Data structures used:
+* Client data structures ->
+  	- an unordered map with the user id as key and the user's tokens and tokens
+	validity as value;
+    - queue of requests made by users;
+* Server data structures ->
+    - an unordered map with the user id's as key and the current active token
+	of that user as value;
+	- an unordered map containing the current active token and token validity
+	of a user as key and a composed value, containing a tokens structure with
+    the generated tokens for the user and an unordered map with the resource as
+	key and a structure of permissions as value;
+	- a queue with the permissions waitlist and a vector of resources;
+-------------------------------------------------------------------------------
+# Program flow - client side:
+* The client input is added to a queue and each command is parsed in a loop
+until the queue is empty;
+* REQUEST command:
+	- the client first calls the authorization function with the user's id as
+	parameter;
+	- if no error message is returned, the client calls the token sign 
+	function, with the previously received authorization token as parameter;
+	- the result (which can either be a signed token or not, the client does
+	not know) is then sent to the server once again, as well as the user id
+	and whether or not the client wants a refresh token;
+	- the server's response will either be an error message, if the end-user
+	has not signed the authorization token, or will contain the access token
+	and/or the refresh token;
+	- the client will register the user, all the tokens and access token
+	validity in its database only if it has received both authorization and
+	access permissions by the server for that user;
+* VALIDATE DELEGATED ACTION command:
+	- first, the client checks if the user's access token has expired;
+	- if it has, then the client makes a request to the server for a new access
+	token, by giving the old one as parameter. in case of success, the client
+	updates the user's tokens and validity in its database;
+	- the client makes a validate delegated action command, by giving the
+	server the access token and the resource as parameters and decreasing the
+	access token's validity.
+-------------------------------------------------------------------------------
+# Program flow - server side:
+* Inside the svc file, which is the entry point of the server, the command line
+arguments are read and the input files are parsed and added in data structures;
+* TOKEN AUTHORIZATION command:
+	- the server receives the user id from the client; it checks if it exists
+	in its database; if not, an error is sent to the client;
+	- if the user exists, the server first deletes any previous tokens and
+	permissions of the user (if they exist);
+	- a new access token is generated and is added to the server's database;
+	all token and permissions entries are initialized;
+	- in the end, the token is returned to the client;
+* TOKEN APPROVAL command (token signature - emulates user):
+	- the server receives the to-sign authorization token;
+	- it gets the top line in the waiting permissions list and iterates through
+	all the resource name and permissions pairs;
+	- if the resource exists, it iterates through all the letters representing
+	permissions and updates the server database entry with the authorization
+	token as key, by marking the resource's wanted permission with true;
+	- if the user denies access, the token is returned to the client unsigned;
+	otherwise, it is signed by adding "SIGNED_" at the beginning of the token.
+* TOKEN ACCESS command:
+	- the server receives the signed authorization token, the user id and
+	if the user wants a refresh token or not;
+	- the server first verifies if the token is actually signed (if it begins
+	with "SIGNED_"); if so, it extracts the unsigned token from the signed
+	one and checks if the given user has the token as its current active token;
+	- if all verifications pass, new access and/or refresh tokens are generated
+	and the database is updated; the tokens are sent to the client;
+	- if the verifications fail, an error is sent;  
+* VALIDATE DELEGATED ACTION command:
+	- the server received the access token, operation type and resource;
+	- in order, the server verifies:
+		- if the access token is in the database; if the access token is valid;
+		- if the resource exists on the server; in the server database
+		unordered map, the server accesess the token's entry and checks if the
+		value of the resource on the given operation is true;
+	- if all verification succeed, a success message is returned; otherwise, it
+	returns an error;
+* TOKEN RENEWAL command:
+	- the server receives the expired access token from the client; it checks
+	if there is a user associated with that token and if initially the user
+	asker for a refresh token; if not, it returns an error message;
+	- if the verification is successful, the server generates new access and
+	refresh tokens and updates the validity; it sends the tokens to the client;
+-------------------------------------------------------------------------------
+# Important mentions:
+  * the keyword "register" (deprecated in C++) was deleted inside the svc file,
+  as it was converted from a .c file to a .cpp; the reason behind this is that
+  the svc file contains the main entry point of the server, which was modified
+  to support the command line arguments for the server's input files and token
+  validity; the file needed access to the C++ header with the signature of the 
+  file parser functions;
+  * the rest of the files generated by rpcgen (except for the templates for the
+  server and client) were left unmodified;
+  * newlines were added at the end of the outputs in the test files, for
+  uniformity;
+  * the "token.h" file was removed and and its content was moved inside the
+  server database file;
+  * the server functions implementation was divided into 3 files, for
+  authorization, end-user emulation and validating delegated action;
+-------------------------------------------------------------------------------

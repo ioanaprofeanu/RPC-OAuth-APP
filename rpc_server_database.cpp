@@ -1,16 +1,24 @@
+/*
+	Profeanu Ioana - 343C1
+	Tema 1 SPRC
+	- the file contains the functions which are used by the server
+	to modify the database
+*/
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <unordered_map>
-#include "server_utils.h"
+#include "rpc_server_utils.h"
 #include <vector>
 #include <queue>
 #include "rpc_server_database.h"
 using namespace std;
 
-// Unordered map for users id and their current active token
+// unordered map for users id and their current active token
 unordered_map<string, string> usersID_active_tokens;
-// Unordered map for current token, permissions for each resource and all tokens
+// unordered map for current token, permissions
+// for each resource and all tokens
 unordered_map<string, Database_Value> server_database;
 // vector of all resources
 vector<string> resources;
@@ -42,11 +50,12 @@ char* generate_access_token(char* clientIdToken) {
     return token;
 }
 
+// functions for reading the user id's from file
 void read_usersIDs(const string& filename) {
     ifstream file(filename);
     
     if (!file.is_open()) {
-        cerr << "Error: Unable to open file " << filename << endl;
+        cerr << "Unable to open file: " << filename << endl;
         return;
     }
 
@@ -57,27 +66,30 @@ void read_usersIDs(const string& filename) {
         try {
             num_users = stoi(line);
         } catch (const invalid_argument& e) {
-            cerr << "Error: Invalid number of users in file " << filename << endl;
+            cerr << "Invalid number of users." << endl;
             return;
         }
     } else {
-        cerr << "Error: Empty file " << filename << endl;
+        cerr << "Empty file." << endl;
         return;
     }
 
-    // Read user IDs and add them to the map
+    // read the user id's and add them to the unordered map of
+	// users id and their current active token
     for (int i = 0; i < num_users && getline(file, line); i++) {
-        usersID_active_tokens[line] = "";
+		// initialize the user's active token to empty string
+        usersID_active_tokens[line] = EMPTY;
     }
 
     file.close();
 }
 
+// function for reading the resources from file
 void read_resources(const string& filename) {
     ifstream file(filename);
 
     if (!file.is_open()) {
-        cerr << "Error: Unable to open file " << filename << endl;
+        cerr << "Unable to open file:" << filename << endl;
         return;
     }
 
@@ -88,16 +100,16 @@ void read_resources(const string& filename) {
         try {
             num_resources = stoi(line);
         } catch (const invalid_argument& e) {
-            cerr << "Error: Invalid number of resources in file " << filename << endl;
+            cerr << "Invalid number of resources." << endl;
             return;
         }
     } else {
-        cerr << "Error: Empty file " << filename << endl;
+        cerr << "Empty file." << endl;
         return;
     }
 
     // Read resource names and add them to the vector
-    resources.clear();  // Clear existing resources
+    resources.clear();
     for (int i = 0; i < num_resources && getline(file, line); i++) {
         resources.push_back(line);
     }
@@ -105,11 +117,12 @@ void read_resources(const string& filename) {
     file.close();
 }
 
+// function for reading the permissions from file
 void read_permissions(const string& filename) {
     ifstream file(filename);
 
     if (!file.is_open()) {
-        cerr << "Error: Unable to open file " << filename << endl;
+        cerr << "Unable to open file: " << filename << endl;
         return;
     }
 
@@ -130,7 +143,8 @@ void read_permissions(const string& filename) {
 
 // function for initializing a database entry with default values
 // the new authorization token is passed as a parameter
-Database_Value initialize_server_database_entry(string new_token_authorize_access)
+Database_Value initialize_server_database_entry
+	(string new_token_authorize_access)
 {
 	Database_Value entry;
 	Permissions_Resources permissionsResources;

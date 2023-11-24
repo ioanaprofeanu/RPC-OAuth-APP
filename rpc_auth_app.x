@@ -1,5 +1,10 @@
 /*
-	structures for the authorization resource access request
+	Profeanu Ioana - 343C1
+	Tema 1 SPRC
+*/
+
+/*
+	- structures for the authorization resource access request
 */
 
 /* the client authorization request structure */
